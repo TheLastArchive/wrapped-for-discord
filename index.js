@@ -10,7 +10,7 @@ async function main() {
     server.start(5000);
 
     //Scheduled task to get recent tracks every hour
-    schedule.scheduleJob({minute: 0}, update_all_users_tracks())
+    schedule.scheduleJob({minute: 0}, update_all_users_tracks)
 
 }
 
@@ -37,5 +37,5 @@ function has_token_expired(token_expires_epoch) {
     return new Date > token_expires_epoch 
 }
 
-// main();
-update_all_users_tracks();
+main();
+// update_all_users_tracks();
