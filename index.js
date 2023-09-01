@@ -6,7 +6,6 @@ const db_insert = require("./lib/database/data_insertion");
 
 async function main() {
     server.start(5000);
-
     schedule.scheduleJob({ minute: 0 }, update_all_users_tracks);
 }
 
@@ -15,15 +14,20 @@ async function update_all_users_tracks() {
     users.forEach(async (user) => {
         let encrypted_token = await user.getToken();
         let token = db_access.handle_token_decrypt(encrypted_token);
-        let user_json = user.toJSON();
-        let token_json = token.toJSON();
-        if (has_token_expired(token_json.token_expires_epoch)) {
+        if (has_token_expired(token.token_expires_epoch)) {
             console.log("Token expired, refreshing...");
-            token_json = await handle_token_refresh(token);
+            token = await handle_token_refresh(token);
             console.log("Token refreshed and stored in database");
         }
-        tracks_handler.get_recent_tracks(token_json.access_token);
+        const recent_tracks = await tracks_handler.get_recent_tracks(
+            token.access_token
+        );
+        handle_track_insertion(recent_tracks);
     });
+}
+
+function handle_track_insertion(tracks) {
+    
 }
 
 function has_token_expired(token_expires_epoch) {
@@ -31,12 +35,11 @@ function has_token_expired(token_expires_epoch) {
 }
 
 async function handle_token_refresh(token) {
-    let token_json = token.toJSON();
-    const updated_refresh_token = await server.refresh_token(token_json);
-    await db_insert.insert_refreshed_token(token, updated_refresh_token);
-
-    return updated_refresh_token;
+    const refreshed_token = await server.refresh_token(token);
+    token = await db_insert.insert_refreshed_token(token, refreshed_token);
+    token.access_token = refreshed_token.access_token;
+    return token;
 }
 
-// main();
-update_all_users_tracks();
+main();
+// update_all_users_tracks();
