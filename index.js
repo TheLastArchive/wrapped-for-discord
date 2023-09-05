@@ -13,7 +13,7 @@ async function update_all_users_tracks() {
     console.log("Scheduled task 'update_all_user_tracks' now running...");
     let users = await db_access.get_all_users();
     for (const user of users) {
-        console.log(user.display_name)
+        // console.log(user.display_name)
         let encrypted_token = await user.getToken();
         let token = db_access.handle_token_decrypt(encrypted_token);
         if (has_token_expired(token.token_expires_epoch)) {
@@ -21,7 +21,6 @@ async function update_all_users_tracks() {
             token = await handle_token_refresh(token);
             console.log("Token refreshed and stored in database");
         }
-        console.log(user.display_name + "'s access token " + token.access_token);
         const recent_tracks = await tracks_handler.get_recent_tracks(
             token.access_token,
             user.played_at
