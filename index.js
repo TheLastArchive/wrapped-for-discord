@@ -6,14 +6,16 @@ const db_insert = require("./lib/database/data_insertion");
 
 async function main() {
     server.start(5000);
-    schedule.scheduleJob({ minute: 0 }, update_all_users_tracks);
+    let hourly_task = schedule.scheduleJob(
+        { minute: 0 },
+        update_all_users_tracks
+    );
 }
 
 async function update_all_users_tracks() {
     console.log("Scheduled task 'update_all_user_tracks' now running...");
     let users = await db_access.get_all_users();
     for (const user of users) {
-        // console.log(user.display_name)
         let encrypted_token = await user.getToken();
         let token = db_access.handle_token_decrypt(encrypted_token);
         if (has_token_expired(token.token_expires_epoch)) {
@@ -25,11 +27,16 @@ async function update_all_users_tracks() {
             token.access_token,
             user.played_at
         );
-        if (!recent_tracks) { continue; }
-        // recent_tracks.forEach(track => console.log(track));
-        await db_insert.handle_recent_tracks(recent_tracks, user);
+        if (!recent_tracks) {
+            continue;
+        } else if (!recent_tracks.items.length) {
+            console.log("No new tracks");
+            continue;
+        }
+
+        await db_insert.handle_recent_tracks(recent_tracks.items, user);
     }
-    console.log("Scheduled task 'update_all_user_tracks' complete");
+    console.log("Scheduled task 'update_all_user_tracks' completed");
 }
 
 function has_token_expired(token_expires_epoch) {
@@ -48,5 +55,5 @@ async function handle_token_refresh(token) {
     return token;
 }
 
-// main();
-update_all_users_tracks();
+main();
+// update_all_users_tracks();
