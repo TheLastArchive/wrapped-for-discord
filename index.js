@@ -18,13 +18,7 @@ async function update_all_users_tracks() {
     let users = await db_access.get_all_users();
     for (const user of users) {
         console.log(user.display_name);
-        let encrypted_token = await user.getToken();
-        let token = db_access.handle_token_decrypt(encrypted_token);
-        if (has_token_expired(token.token_expires_epoch)) {
-            console.log("Token expired, refreshing...");
-            token = await handle_token_refresh(token);
-            console.log("Token refreshed and stored in database");
-        }
+        let token = await get_token(user);
         const recent_tracks = await tracks_handler.get_recent_tracks(
             token.access_token,
             user.played_at
@@ -43,15 +37,26 @@ function has_token_expired(token_expires_epoch) {
     return new Date() > token_expires_epoch;
 }
 
+async function get_token(user) {
+    let encrypted_token = await user.getToken();
+    let token = db_access.handle_token_decrypt(encrypted_token);
+    if (has_token_expired(token.token_expires_epoch)) {
+        return await handle_token_refresh(token);
+    }
+    return token;
+}
+
 /**
  * @description Fetches a new refresh token, encrypts and stores in the database, updates 'token'
  * @param {*} token sequelize token for the user
  * @returns user token with the refreshed access token
  */
 async function handle_token_refresh(token) {
+    console.log("Token expired, refreshing...");
     const refreshed_token = await server.refresh_token(token);
     token = await db_insert.insert_refreshed_token(token, refreshed_token);
     token.access_token = refreshed_token.access_token;
+    console.log("Token refreshed and stored in database");
     return token;
 }
 
