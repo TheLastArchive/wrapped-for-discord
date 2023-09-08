@@ -55,5 +55,5 @@ async function handle_token_refresh(token) {
     return token;
 }
 
-// main();
-update_all_users_tracks();
+main();
+// update_all_users_tracks();
