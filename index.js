@@ -25,18 +25,13 @@ async function update_all_users_tracks() {
             token = await handle_token_refresh(token);
             console.log("Token refreshed and stored in database");
         }
-        console.log(new Date(user.played_at));
         const recent_tracks = await tracks_handler.get_recent_tracks(
             token.access_token,
             user.played_at
         );
         if (!recent_tracks) {
             continue;
-        } else if (!recent_tracks.items.length) {
-            console.log("No new tracks");
-            continue;
         }
-
         await db_insert.handle_recent_tracks(recent_tracks.items, user);
         total += recent_tracks.items.length;
     }
