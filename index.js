@@ -6,6 +6,7 @@ const db_insert = require("./lib/database/data_insertion");
 
 async function main() {
     server.start(5000);
+    update_all_users_tracks();
     let hourly_task = schedule.scheduleJob(
         { minute: 0 },
         update_all_users_tracks
