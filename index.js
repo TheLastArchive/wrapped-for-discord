@@ -1,52 +1,52 @@
 const schedule = require("node-schedule");
 const tracks_handler = require("./lib/tracks");
 const server = require("./lib/token");
-const db_access = require("./lib/database/data_access");
-const db_insert = require("./lib/database/data_insertion");
+const dbAccess = require("./lib/database/dataAccess");
+const dbInsert = require("./lib/database/dataInsertion");
 const wrapped = require("./lib/wrapped");
 
 async function main() {
     server.start(5000);
-    await update_all_users_tracks();
+    await updateAllUsersTracks();
     // const wrapped_object = await wrapped.handle_wrapped();
     // console.log("Gamer Aquarium");
     // console.log(wrapped_object.global_stats.total_count + " plays");
-    // console.log(milliseconds_to_hours_and_minutes(wrapped_object.global_stats.total_time_listened));
+    // console.log(millisecondsToHoursAndMinutes(wrapped_object.global_stats.total_time_listened));
     // for (const user of wrapped_object.user_stats) {
 
     //     console.log(user.display_name);
     //     console.log(user.total_count + " plays");
-    //     console.log(milliseconds_to_hours_and_minutes(user.total_time_listened));
+    //     console.log(millisecondsToHoursAndMinutes(user.total_time_listened));
     // }
     let hourly_task = schedule.scheduleJob(
         { minute: 0 },
-        update_all_users_tracks
+        updateAllUsersTracks
     );
 }
 
-async function update_all_users_tracks() {
-    console.log("Scheduled task 'update_all_user_tracks' now running...");
+async function updateAllUsersTracks() {
+    console.log("Scheduled task 'updateAllUserTracks' now running...");
     let total = 0;
-    let users = await db_access.get_all_users();
+    let users = await dbAccess.getAllUsers();
     for (const user of users) {
         console.log(user.display_name);
 
-        let token = await server.get_token(user);
-        const recent_tracks = await tracks_handler.get_recent_tracks(
+        let token = await server.getToken(user);
+        const recentTracks = await tracks_handler.getRecentTracks(
             token.access_token,
             user.played_at
         );
-        if (!recent_tracks) {
+        if (!recentTracks) {
             continue;
         }
-        await db_insert.handle_recent_tracks(recent_tracks.items, user);
-        total += recent_tracks.items.length;
+        await dbInsert.handleRecentTracks(recentTracks.items, user);
+        total += recentTracks.items.length;
     }
-    console.log("Scheduled task 'update_all_user_tracks' completed. " +
+    console.log("Scheduled task 'updateAllUserTracks' completed. " +
             total + " total records added");
 }
 
-function milliseconds_to_hours_and_minutes(milliseconds) {
+function millisecondsToHoursAndMinutes(milliseconds) {
     // Calculate hours, minutes, and seconds
     const hours = Math.floor(milliseconds / (1000 * 60 * 60));
     const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
@@ -54,4 +54,4 @@ function milliseconds_to_hours_and_minutes(milliseconds) {
 
 }
 main();
-// update_all_users_tracks();
+// updateAllUsersTracks();
